@@ -1,8 +1,8 @@
 import googleapiclient
 
-from pyspreadsheet import write
-from pyspreadsheet.manage_sheet import add_worksheet
-from pyspreadsheet.read import check_availability_column
+from . import write
+from .manage_sheet import add_worksheet
+from .read import check_availability_column
 
 
 def send_to_sheet(sheet_id, data):

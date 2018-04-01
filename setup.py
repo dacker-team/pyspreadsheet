@@ -10,7 +10,7 @@ with open('LICENSE') as f:
 
 setup(
     name='pyspreadsheet',
-    version='0.0.5',
+    version='0.0.6',
     description='Easily send data to Google Sheets',
     long_description=readme,
     author='Dacker',
