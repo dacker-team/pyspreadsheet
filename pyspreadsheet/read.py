@@ -4,9 +4,9 @@ from .tool import column_string, construct_range
 from .init_connection import get_api_account
 
 
-def get_data_from_range(sheet_id, worksheet_name, nb_column, nb_row):
+def get_data_from_range(project, sheet_id, worksheet_name, nb_column, nb_row):
     range = construct_range(worksheet_name, "A1", column_string(nb_column) + str(nb_row + 1))
-    account = get_api_account()
+    account = get_api_account(project)
     data = account.values().get(
         spreadsheetId=sheet_id,
         range=range
@@ -42,13 +42,13 @@ def check_other_row(column_index_to_investigate, values):
     return warning_columns
 
 
-def check_availability_column(sheet_id, data):
+def check_availability_column(project, sheet_id, data):
     worksheet_name = data["worksheet_name"]
     columns_name = data["columns_name"]
     rows = data["rows"]
     nb_row = len(rows)
     nb_column = len(columns_name)
-    data = get_data_from_range(sheet_id, worksheet_name, nb_column, nb_row)
+    data = get_data_from_range(project, sheet_id, worksheet_name, nb_column, nb_row)
     completely_available = {
         "completely_available": True
     }

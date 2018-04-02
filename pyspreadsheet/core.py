@@ -5,12 +5,12 @@ from .manage_sheet import add_worksheet
 from .read import check_availability_column
 
 
-def send_to_sheet(sheet_id, data):
+def send_to_sheet(project, sheet_id, data):
     try:
-        available_response = check_availability_column(sheet_id, data)
+        available_response = check_availability_column(project, sheet_id, data)
 
     except googleapiclient.errors.HttpError:
-        add_worksheet(sheet_id, data["worksheet_name"])
+        add_worksheet(project, sheet_id, data["worksheet_name"])
         available_response = {
             "completely_available": True
         }
@@ -22,5 +22,5 @@ def send_to_sheet(sheet_id, data):
                               "\nType yes to continue\n")
         if user_response.lower() not in ["yes", "y"]:
             return 0
-    write.write(sheet_id, data)
+    write.write(project, sheet_id, data)
     return 0

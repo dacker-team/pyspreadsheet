@@ -1,16 +1,16 @@
 from . import init_connection
 
 
-def get_sheet_info(sheet_id):
-    account = init_connection.get_api_account()
+def get_sheet_info(project, sheet_id):
+    account = init_connection.get_api_account(project)
     sheet = account.get(
         spreadsheetId=sheet_id
     ).execute()
     return sheet
 
 
-def find_worksheet(sheet_id, worksheet_name):
-    sheet = get_sheet_info(sheet_id)
+def find_worksheet(project, sheet_id, worksheet_name):
+    sheet = get_sheet_info(project, sheet_id)
     wks_list = sheet.get("sheets")
     for wks in wks_list:
         if wks.get("properties").get("title").lower() == worksheet_name.lower():
@@ -19,8 +19,8 @@ def find_worksheet(sheet_id, worksheet_name):
     return None
 
 
-def add_worksheet(sheet_id, worksheet_name):
-    account = init_connection.get_api_account()
+def add_worksheet(project, sheet_id, worksheet_name):
+    account = init_connection.get_api_account(project)
     requests = [
         {
             "addSheet": {

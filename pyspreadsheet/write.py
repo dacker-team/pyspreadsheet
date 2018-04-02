@@ -2,7 +2,7 @@ from .tool import construct_range
 from . import init_connection
 
 
-def write(sheet_id, data):
+def write(project, sheet_id, data):
     worksheet_name = data["worksheet_name"]
     columns_name = data["columns_name"]
     rows = data["rows"]
@@ -18,7 +18,7 @@ def write(sheet_id, data):
             }
         ]
     }
-    account = init_connection.get_api_account()
+    account = init_connection.get_api_account(project)
     response = account.values().batchUpdate(spreadsheetId=sheet_id,
                                             body=body).execute()
     return response

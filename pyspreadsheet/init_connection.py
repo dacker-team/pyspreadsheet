@@ -1,30 +1,15 @@
 import argparse
-import os
 # Path to get client_secrets.json and to store credentials
 import httplib2
 from googleapiclient.discovery import build
 from oauth2client import client, file
 from oauth2client import tools
 
-GOOGLE_CLIENT_SECRET_PATH = os.environ.get("GOOGLE_CLIENT_SECRET_PATH")
-GOOGLE_CREDENTIALS_PATH = os.environ.get("GOOGLE_CREDENTIALS_PATH")
-
-if not GOOGLE_CLIENT_SECRET_PATH:
-    GOOGLE_CLIENT_SECRET_PATH = './'
-
-if not GOOGLE_CREDENTIALS_PATH:
-    GOOGLE_CREDENTIALS_PATH = './'
-
-if GOOGLE_CLIENT_SECRET_PATH[-1] == '/':
-    GOOGLE_CLIENT_SECRET_PATH = GOOGLE_CLIENT_SECRET_PATH[:-1]
-
-if GOOGLE_CREDENTIALS_PATH[-1] == '/':
-    GOOGLE_CREDENTIALS_PATH = GOOGLE_CREDENTIALS_PATH[:-1]
-
-GOOGLE_CLIENT_SECRET_PATH = GOOGLE_CLIENT_SECRET_PATH + '/client_secrets.json'
+from pyspreadsheet.path import credential_path
 
 
-def get_api_account(version='v4'):
+def get_api_account(project, version='v4'):
+    google_client_secret_path, google_credentials_path = credential_path(project)
     scopes = ['https://www.googleapis.com/auth/spreadsheets']
     discovery_uri = 'https://sheets.googleapis.com/$discovery/rest'
     parser = argparse.ArgumentParser(
@@ -34,11 +19,11 @@ def get_api_account(version='v4'):
 
     # Set up a Flow object to be used if we need to authenticate.
     flow = client.flow_from_clientsecrets(
-        GOOGLE_CLIENT_SECRET_PATH,
+        google_client_secret_path,
         scope=scopes,
-        message=tools.message_if_missing(GOOGLE_CLIENT_SECRET_PATH))
+        message=tools.message_if_missing(google_client_secret_path))
 
-    path_storage = GOOGLE_CREDENTIALS_PATH + "/spreadsheet.json"
+    path_storage = google_credentials_path + "/spreadsheet.json"
     storage = file.Storage(path_storage)
     credentials = storage.get()
     if credentials is None or credentials.invalid:
