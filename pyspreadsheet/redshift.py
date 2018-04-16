@@ -1,5 +1,6 @@
 import pyred
 from . import core
+import datetime
 
 
 def query_to_sheet(project, sheet_id, worksheet_name, instance, query):
@@ -8,6 +9,11 @@ def query_to_sheet(project, sheet_id, worksheet_name, instance, query):
         return 0
     columns_name = list(items[0].keys())
     rows = [list(i.values()) for i in items]
+    for row in rows:
+        for i in range(len(row)):
+            r = row[i]
+            if isinstance(r, datetime.datetime):
+                row[i] = str(r)
     data = {
         "worksheet_name": worksheet_name,
         "columns_name": columns_name,
