@@ -23,20 +23,21 @@ def write(project, sheet_id, data):
     response = account.values().batchUpdate(spreadsheetId=sheet_id,
                                             body=body).execute()
     row_count = get_row_count(project, sheet_id, worksheet_name)
-    clean_row = ["" for r in columns_name]
-    clean_rows = [clean_row for i in range(row_count - len(values))]
-    clean_body = {
-        "value_input_option": "USER_ENTERED",
-        "data": [
+    if row_count > len(values):
+        clean_row = ["" for r in columns_name]
+        clean_rows = [clean_row for i in range(row_count - len(values))]
+        clean_body = {
+            "value_input_option": "USER_ENTERED",
+            "data": [
 
-            {
-                "range": construct_range(worksheet_name, 'A' + str(len(values) + 1)),
-                "majorDimension": "ROWS",
-                "values": clean_rows,
-            }
-        ]
-    }
-    account.values().batchUpdate(spreadsheetId=sheet_id,
-                                 body=clean_body).execute()
+                {
+                    "range": construct_range(worksheet_name, 'A' + str(len(values) + 1)),
+                    "majorDimension": "ROWS",
+                    "values": clean_rows,
+                }
+            ]
+        }
+        account.values().batchUpdate(spreadsheetId=sheet_id,
+                                     body=clean_body).execute()
 
     return response
