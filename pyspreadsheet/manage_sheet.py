@@ -1,8 +1,8 @@
 from . import init_connection
 
 
-def get_row_count(sheet_id, worksheet_name):
-    info = get_sheet_info("TEST", sheet_id)
+def get_row_count(project, sheet_id, worksheet_name):
+    info = get_sheet_info(project, sheet_id)
     for i in info["sheets"]:
         properties = i["properties"]
         if properties["title"] == worksheet_name:
