@@ -1,5 +1,5 @@
 from pyspreadsheet.manage_sheet import get_row_count
-from .tool import construct_range
+from .tool import construct_range, delete_none
 from . import init_connection
 
 
@@ -7,7 +7,9 @@ def write(project, sheet_id, data):
     worksheet_name = data["worksheet_name"]
     columns_name = data["columns_name"]
     rows = data["rows"]
+    rows = delete_none(rows)
     values = [columns_name] + rows
+
     body = {
         "value_input_option": "USER_ENTERED",
         "data": [

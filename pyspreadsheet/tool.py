@@ -11,3 +11,11 @@ def column_string(n):
         n, remainder = divmod(n - 1, 26)
         string = chr(65 + remainder) + string
     return string
+
+
+def delete_none(rows):
+    for i in range(len(rows)):
+        for j in range(len(rows[i])):
+            if rows[i][j] is None:
+                rows[i][j] = ""
+    return rows
