@@ -1,6 +1,15 @@
 from . import init_connection
 
 
+def get_row_count(sheet_id, worksheet_name):
+    info = get_sheet_info("TEST", sheet_id)
+    for i in info["sheets"]:
+        properties = i["properties"]
+        if properties["title"] == worksheet_name:
+            return properties["gridProperties"]["rowCount"]
+    return 0
+
+
 def get_sheet_info(project, sheet_id):
     account = init_connection.get_api_account(project)
     sheet = account.get(
@@ -39,5 +48,5 @@ def add_worksheet(project, sheet_id, worksheet_name):
         'requests': requests
     }
     response = account.batchUpdate(spreadsheetId=sheet_id,
-                                 body=body).execute()
+                                   body=body).execute()
     return response
