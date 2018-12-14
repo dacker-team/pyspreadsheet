@@ -1,4 +1,6 @@
 import pyred
+from decimal import Decimal
+
 from . import core
 import datetime
 
@@ -14,6 +16,8 @@ def query_to_sheet(project, sheet_id, worksheet_name, instance, query):
             r = row[i]
             if isinstance(r, datetime.datetime):
                 row[i] = str(r)
+            if isinstance(r, Decimal):
+                row[i] = float(r)
     data = {
         "worksheet_name": worksheet_name,
         "columns_name": columns_name,
