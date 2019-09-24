@@ -1,8 +1,8 @@
 def construct_range(worksheet_name, start, end=None):
-    range = "'" + worksheet_name + "'" + "!" + start
+    range_ = "'" + worksheet_name + "'" + "!" + start
     if end:
-        range = range + ":" + end
-    return range
+        range_ = range_ + ":" + end
+    return range_
 
 
 def column_string(n):
