@@ -1,6 +1,10 @@
 import datetime
 
 import decimal
+import os
+import copy
+import json
+import requests
 import googleapiclient
 from googleauthentication import GoogleAuthentication
 from dbstream import DBStream
@@ -34,6 +38,24 @@ class Spreadsheet:
             if user_response.lower() not in ["yes", "y"]:
                 return 0
         write.write(self, sheet_id, data)
+        data_copy = copy.deepcopy(data)
+        url = os.environ.get("MONITORING_EXPORT_URL")
+        if url:
+            body = {
+                "dbstream_instance_id": self.googleauthentication.dbstream.dbstream_instance_id,
+                "instance_name": self.googleauthentication.dbstream.instance_name,
+                "client_id": self.googleauthentication.dbstream.client_id,
+                "instance_type_prefix": self.googleauthentication.dbstream.instance_type_prefix,
+                "sheet_id": sheet_id,
+                "worksheet_name": data_copy["worksheet_name"],
+                "nb_rows": len(data_copy["rows"]),
+                "nb_columns": len(data_copy["columns_name"]),
+                "timestamp": str(datetime.datetime.now()),
+                "ssh_tunnel": True if self.googleauthentication.dbstream.ssh_tunnel else False,
+                "local_absolute_path": os.getcwd()
+            }
+            r = requests.post(url=url, data=json.dumps(body))
+            print(r.status_code)
         return 0
 
     def query_to_sheet(self, sheet_id, worksheet_name, query):
