@@ -1,4 +1,5 @@
-import datetime
+from datetime import datetime
+from time import sleep
 
 import decimal
 import os
@@ -79,9 +80,10 @@ class Spreadsheet:
             }
             self.send(sheet_id, data)
         except Exception as e:
+            print(seconds)
             if seconds <= 20:
                 print("Waiting %s seconds..." % seconds)
-                datetime.time.sleep(seconds)
+                sleep(seconds)
                 self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds * 2)
             else:
                 raise e
