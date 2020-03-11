@@ -5,6 +5,8 @@ import decimal
 import os
 import copy
 import json
+
+import pygsheets
 import requests
 import googleapiclient
 from googleauthentication import GoogleAuthentication
@@ -14,6 +16,7 @@ from pyspreadsheet.core import write
 from pyspreadsheet.core.manage_sheet import add_worksheet
 
 from pyspreadsheet.core.read import check_availability_column
+from pyspreadsheet.core.tool import value_or_none, remove_col
 
 
 class Spreadsheet:
@@ -91,3 +94,117 @@ class Spreadsheet:
     def query_to_sheet(self, sheet_id, worksheet_name, query):
         seconds = 5
         self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds)
+
+
+    # NEW
+
+
+    def _get_worksheets_by_id(self, sheet_id, worksheet_name):
+        ps = pygsheets.client.Client(credentials=self.googleauthentication.user_credentials())
+        sh = ps.open_by_key(sheet_id)
+        wks_list = sh.worksheets()
+        for wks in wks_list:
+            if wks.title.lower() == worksheet_name.lower():
+                return wks
+        print("This worksheet doesn't exist")
+        exit()
+        return None
+
+
+    def _get_column_names(self, row):
+        result = []
+        for i in row:
+            if i != '':
+                column_name = str \
+                    .lower(str(i)) \
+                    .replace(" ", "_") \
+                    .replace("(", "") \
+                    .replace(")", "") \
+                    .replace("\n", "_") \
+                    .replace("/", "_") \
+                    .replace("'s", "") \
+                    .replace("-", "_")
+
+                if column_name in result:
+                    column_name = column_name + "_%s" % (str(result.count(column_name) + 1))
+
+                result.append(column_name)
+        return result
+
+
+
+    def get_info_from_worksheet(self, sheet_id, worksheet_name, fr_to_us_date=False, avoid_lines=None, transform_comma=False,
+                                format_date_from=None, list_col_to_remove=None, special_table_name=None,
+                                remove_comma=False, treat_int_column=False, remove_comma_float=False):
+        wks = self._get_worksheets_by_id(sheet_id, worksheet_name)
+        rows = []
+        c = 0
+        sheet_name = str.lower(str(wks.title))
+        table_name = "spreadsheet." + sheet_name.replace(" ", "_")
+        if avoid_lines:
+            wks_list = []
+            for row in wks:
+                wks_list.append(row)
+            wks = wks_list[avoid_lines:]
+        columns_names = self._get_column_names(wks[0])
+
+        for row in wks:
+            if c > 0:
+                for i in range(len(columns_names)):
+                    if "€" in row[i]:
+                        row[i] = row[i].replace(" ", "").replace("€", "")
+                    if "#DIV/0" in row[i]:
+                        row[i] = None
+                    if row[i] == "#N/A":
+                        row[i] = None
+                    if row[i] == "#REF!":
+                        row[i] = None
+                    if treat_int_column and row[i] == "NA" or row[i] == '?':
+                        row[i] = None
+                    try:
+                        row[i] = int(row[i].replace("\u202f", ""))
+                    except Exception as e:
+                        pass
+                    if transform_comma:
+                        try:
+                            row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
+                        except Exception as e:
+                            pass
+                    if remove_comma:
+                        try:
+                            row[i] = int(row[i].replace(",", ""))
+                        except:
+                            pass
+                    if remove_comma_float:
+                        try:
+                            row[i] = float(row[i].replace(",", ""))
+                        except:
+                            pass
+                    if fr_to_us_date:
+                        if "date" in columns_names[i]:
+                            if row[i] and row[i] != "":
+                                try:
+                                    row[i] = datetime.datetime.strptime(row[i], "%d/%m/%Y")
+                                except:
+                                    try:
+                                        row[i] = datetime.datetime.strptime(row[i], "%d/%m/%y")
+                                    except:
+                                        row[i] = datetime.datetime.strptime(row[i][:10], "%Y-%m-%d")
+                    if format_date_from:
+                        if "date" in columns_names[i]:
+                            if row[i] and row[i] != "":
+                                row[i] = datetime.datetime.strptime(row[i], format_date_from)
+
+                row = tuple(row[:len(columns_names)])
+                rows.append(list(map(lambda x: value_or_none(x), row)))
+            c = 1
+        if special_table_name:
+            table_name = "spreadsheet." + special_table_name.replace(" ", "_")
+        result = {
+            "table_name": table_name,
+            "columns_name": columns_names,
+            "rows": rows,
+        }
+        if list_col_to_remove:
+            result = remove_col(result, list_col_to_remove)
+        return result
