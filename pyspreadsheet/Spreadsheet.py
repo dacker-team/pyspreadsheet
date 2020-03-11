@@ -58,26 +58,35 @@ class Spreadsheet:
             print(r.status_code)
         return 0
 
-    def query_to_sheet(self, sheet_id, worksheet_name, query):
-        if not self.dbstream:
-            print("No DBStream set")
-            exit()
-        items = self.dbstream.execute_query(query)
-        if not items:
-            return 0
-        columns_name = list(items[0].keys())
-        rows = [list(i.values()) for i in items]
-        for row in rows:
-            for i in range(len(row)):
-                r = row[i]
-                if isinstance(r, datetime.datetime):
-                    row[i] = str(r)
-                if isinstance(r, decimal.Decimal):
-                    row[i] = float(r)
-        data = {
-            "worksheet_name": worksheet_name,
-            "columns_name": columns_name,
-            "rows": rows
-        }
-        self.send(sheet_id, data)
+    def _try_query_to_sheet(self, sheet_id, worksheet_name, query, seconds):
+        try:
+            items = self.dbstream.execute_query(query)
+            if not items:
+                return 0
+            columns_name = list(items[0].keys())
+            rows = [list(i.values()) for i in items]
+            for row in rows:
+                for i in range(len(row)):
+                    r = row[i]
+                    if isinstance(r, datetime.datetime):
+                        row[i] = str(r)
+                    if isinstance(r, decimal.Decimal):
+                        row[i] = float(r)
+            data = {
+                "worksheet_name": worksheet_name,
+                "columns_name": columns_name,
+                "rows": rows
+            }
+            self.send(sheet_id, data)
+        except Exception as e:
+            if seconds <= 20:
+                print("Waiting %s seconds..." % seconds)
+                datetime.time.sleep(seconds)
+                self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds * 2)
+            else:
+                raise e
         return 0
+
+    def query_to_sheet(self, sheet_id, worksheet_name, query):
+        seconds = 5
+        self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds)
