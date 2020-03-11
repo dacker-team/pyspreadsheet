@@ -80,7 +80,6 @@ class Spreadsheet:
             }
             self.send(sheet_id, data)
         except Exception as e:
-            print(seconds)
             if seconds <= 20:
                 print("Waiting %s seconds..." % seconds)
                 sleep(seconds)
