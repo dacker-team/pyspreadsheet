@@ -6,3 +6,5 @@ pyspreadsheet.egg-info/
 *pyc
 sandbox.py
 sandbox.json
+*client_secret*
+deploy.sh
