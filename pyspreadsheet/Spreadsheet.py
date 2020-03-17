@@ -1,6 +1,6 @@
+import string
 from datetime import datetime
 from time import sleep
-
 import decimal
 import os
 import copy
@@ -51,7 +51,7 @@ class Spreadsheet:
                 "worksheet_name": data_copy["worksheet_name"],
                 "nb_rows": len(data_copy["rows"]),
                 "nb_columns": len(data_copy["columns_name"]),
-                "timestamp": str(datetime.datetime.now()),
+                "timestamp": str(datetime.now()),
                 "ssh_tunnel": True if self.googleauthentication.dbstream.ssh_tunnel else False,
                 "local_absolute_path": os.getcwd()
             }
@@ -59,7 +59,7 @@ class Spreadsheet:
             print(r.status_code)
         return 0
 
-    def _try_query_to_sheet(self, sheet_id, worksheet_name, query, seconds):
+    def _try_query_to_sheet(self, sheet_id, worksheet_name, query, seconds, beautiful_columns_name):
         try:
             items = self.dbstream.execute_query(query)
             if not items:
@@ -69,25 +69,31 @@ class Spreadsheet:
             for row in rows:
                 for i in range(len(row)):
                     r = row[i]
-                    if isinstance(r, datetime.datetime):
+                    if isinstance(r, datetime):
                         row[i] = str(r)
                     if isinstance(r, decimal.Decimal):
                         row[i] = float(r)
             data = {
                 "worksheet_name": worksheet_name,
-                "columns_name": columns_name,
+                "columns_name": columns_name if not beautiful_columns_name else [string.capwords(c.replace("_", " ")) for
+                                                                                c in columns_name],
                 "rows": rows
             }
             self.send(sheet_id, data)
         except Exception as e:
             if seconds <= 20:
+                print(str(e))
                 print("Waiting %s seconds..." % seconds)
                 sleep(seconds)
-                self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds * 2)
+                self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds * 2, beautiful_columns_name)
             else:
                 raise e
         return 0
 
-    def query_to_sheet(self, sheet_id, worksheet_name, query):
+    def query_to_sheet(self, sheet_id, worksheet_name, query, beautiful_columns_name=False):
         seconds = 5
-        self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds)
+        self._try_query_to_sheet(sheet_id=sheet_id,
+                                 worksheet_name=worksheet_name,
+                                 query=query,
+                                 seconds=seconds,
+                                 beautiful_columns_name=beautiful_columns_name)
