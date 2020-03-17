@@ -75,8 +75,10 @@ class Spreadsheet:
                         row[i] = float(r)
             data = {
                 "worksheet_name": worksheet_name,
-                "columns_name": columns_name if not beautiful_columns_name else [string.capwords(c.replace("_", " ")) for
-                                                                                c in columns_name],
+                "columns_name": columns_name if not beautiful_columns_name else [string.capwords(
+                    c.replace("_", " ")
+                ).replace("Arr", "ARR").replace("Mrr", "MRR").replace("Tcv", "TCV").replace("Acv", "ACV") for
+                                                                                 c in columns_name],
                 "rows": rows
             }
             self.send(sheet_id, data)
