@@ -95,9 +95,7 @@ class Spreadsheet:
         seconds = 5
         self._try_query_to_sheet(sheet_id, worksheet_name, query, seconds)
 
-
     # NEW
-
 
     def _get_worksheets_by_id(self, sheet_id, worksheet_name):
         ps = pygsheets.client.Client(credentials=self.googleauthentication.user_credentials())
@@ -110,8 +108,7 @@ class Spreadsheet:
         exit()
         return None
 
-
-    def _get_column_names(self, row):
+    def get_column_names(self, row):
         result = []
         for i in row:
             if i != '':
@@ -131,9 +128,8 @@ class Spreadsheet:
                 result.append(column_name)
         return result
 
-
-
-    def get_info_from_worksheet(self, sheet_id, worksheet_name, fr_to_us_date=False, avoid_lines=None, transform_comma=False,
+    def get_info_from_worksheet(self, sheet_id, worksheet_name, fr_to_us_date=False, avoid_lines=None,
+                                transform_comma=False,
                                 format_date_from=None, list_col_to_remove=None, special_table_name=None,
                                 remove_comma=False, treat_int_column=False, remove_comma_float=False):
         wks = self._get_worksheets_by_id(sheet_id, worksheet_name)
