@@ -54,7 +54,7 @@ class Spreadsheet:
                 "worksheet_name": data_copy["worksheet_name"],
                 "nb_rows": len(data_copy["rows"]),
                 "nb_columns": len(data_copy["columns_name"]),
-                "timestamp": str(datetime.datetime.now()),
+                "timestamp": str(datetime.now()),
                 "ssh_tunnel": True if self.googleauthentication.dbstream.ssh_tunnel else False,
                 "local_absolute_path": os.getcwd()
             }
@@ -72,7 +72,7 @@ class Spreadsheet:
             for row in rows:
                 for i in range(len(row)):
                     r = row[i]
-                    if isinstance(r, datetime.datetime):
+                    if isinstance(r, datetime):
                         row[i] = str(r)
                     if isinstance(r, decimal.Decimal):
                         row[i] = float(r)
@@ -98,7 +98,7 @@ class Spreadsheet:
     # NEW
 
     def _get_worksheets_by_id(self, sheet_id, worksheet_name):
-        ps = pygsheets.client.Client(credentials=self.googleauthentication.user_credentials())
+        ps = pygsheets.client.Client(credentials=self.googleauthentication.credentials())
         sh = ps.open_by_key(sheet_id)
         wks_list = sh.worksheets()
         for wks in wks_list:
@@ -128,79 +128,83 @@ class Spreadsheet:
                 result.append(column_name)
         return result
 
-    def get_info_from_worksheet(self, sheet_id, worksheet_name, fr_to_us_date=False, avoid_lines=None,
-                                transform_comma=False,
-                                format_date_from=None, list_col_to_remove=None, special_table_name=None,
-                                remove_comma=False, treat_int_column=False, remove_comma_float=False):
-        wks = self._get_worksheets_by_id(sheet_id, worksheet_name)
-        rows = []
-        c = 0
-        sheet_name = str.lower(str(wks.title))
-        table_name = "spreadsheet." + sheet_name.replace(" ", "_")
-        if avoid_lines:
-            wks_list = []
-            for row in wks:
-                wks_list.append(row)
-            wks = wks_list[avoid_lines:]
-        columns_names = self._get_column_names(wks[0])
+    def get_info_from_worksheets(self, config, fr_to_us_date=False, avoid_lines=None,
+                                 transform_comma=False,
+                                 format_date_from=None, list_col_to_remove=None, special_table_name=None,
+                                 remove_comma=False, treat_int_column=False, remove_comma_float=False):
+        for key in config:
+            worksheet_name = config[key]['worksheet_name']
+            wks = self._get_worksheets_by_id(config[key]['sheet_id'], worksheet_name)
+            table_name = "spreadsheet." + worksheet_name.replace(" ", "_").lower()
 
-        for row in wks:
-            if c > 0:
-                for i in range(len(columns_names)):
-                    if "€" in row[i]:
-                        row[i] = row[i].replace(" ", "").replace("€", "")
-                    if "#DIV/0" in row[i]:
-                        row[i] = None
-                    if row[i] == "#N/A":
-                        row[i] = None
-                    if row[i] == "#REF!":
-                        row[i] = None
-                    if treat_int_column and row[i] == "NA" or row[i] == '?':
-                        row[i] = None
-                    try:
-                        row[i] = int(row[i].replace("\u202f", ""))
-                    except Exception as e:
-                        pass
-                    if transform_comma:
+            rows = []
+            c = 0
+            if avoid_lines:
+                wks_list = []
+                for row in wks:
+                    wks_list.append(row)
+                wks = wks_list[avoid_lines:]
+            columns_names = self.get_column_names(wks[0])
+
+            for row in wks:
+                if c > 0:
+                    for i in range(len(columns_names)):
+                        if "€" in row[i]:
+                            row[i] = row[i].replace(" ", "").replace("€", "")
+                        if "#DIV/0" in row[i]:
+                            row[i] = None
+                        if row[i] == "#N/A":
+                            row[i] = None
+                        if row[i] == "#REF!":
+                            row[i] = None
+                        if treat_int_column and row[i] == "NA" or row[i] == '?':
+                            row[i] = None
                         try:
-                            row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
+                            row[i] = int(row[i].replace("\u202f", ""))
                         except Exception as e:
                             pass
-                    if remove_comma:
-                        try:
-                            row[i] = int(row[i].replace(",", ""))
-                        except:
-                            pass
-                    if remove_comma_float:
-                        try:
-                            row[i] = float(row[i].replace(",", ""))
-                        except:
-                            pass
-                    if fr_to_us_date:
-                        if "date" in columns_names[i]:
-                            if row[i] and row[i] != "":
-                                try:
-                                    row[i] = datetime.datetime.strptime(row[i], "%d/%m/%Y")
-                                except:
+                        if transform_comma:
+                            try:
+                                row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
+                            except Exception as e:
+                                pass
+                        if remove_comma:
+                            try:
+                                row[i] = int(row[i].replace(",", ""))
+                            except:
+                                pass
+                        if remove_comma_float:
+                            try:
+                                row[i] = float(row[i].replace(",", ""))
+                            except:
+                                pass
+                        if fr_to_us_date:
+                            if "date" in columns_names[i]:
+                                if row[i] and row[i] != "":
                                     try:
-                                        row[i] = datetime.datetime.strptime(row[i], "%d/%m/%y")
+                                        row[i] = datetime.strptime(row[i], "%d/%m/%Y")
                                     except:
-                                        row[i] = datetime.datetime.strptime(row[i][:10], "%Y-%m-%d")
-                    if format_date_from:
-                        if "date" in columns_names[i]:
-                            if row[i] and row[i] != "":
-                                row[i] = datetime.datetime.strptime(row[i], format_date_from)
+                                        try:
+                                            row[i] = datetime.strptime(row[i], "%d/%m/%y")
+                                        except:
+                                            row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
+                        if format_date_from:
+                            if "date" in columns_names[i]:
+                                if row[i] and row[i] != "":
+                                    row[i] = datetime.strptime(row[i], format_date_from)
 
-                row = tuple(row[:len(columns_names)])
-                rows.append(list(map(lambda x: value_or_none(x), row)))
-            c = 1
-        if special_table_name:
-            table_name = "spreadsheet." + special_table_name.replace(" ", "_")
-        result = {
-            "table_name": table_name,
-            "columns_name": columns_names,
-            "rows": rows,
-        }
-        if list_col_to_remove:
-            result = remove_col(result, list_col_to_remove)
-        return result
+                    row = tuple(row[:len(columns_names)])
+                    rows.append(list(map(lambda x: value_or_none(x), row)))
+                c = 1
+            if special_table_name:
+                table_name = "spreadsheet." + special_table_name.replace(" ", "_")
+            result = {
+                "table_name": table_name,
+                "columns_name": columns_names,
+                "rows": rows,
+            }
+            if list_col_to_remove:
+                result = remove_col(result, list_col_to_remove)
+
+            self.dbstream.send_data(result)
+            print('table %s created' % table_name)
