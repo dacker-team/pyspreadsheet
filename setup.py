@@ -17,6 +17,7 @@ setup(
     install_requires=[
         "googleauthentication>=0.0.10",
         "dbstream>=0.0.12",
-        "google-api-python-client>=1.6.6"
+        "google-api-python-client>=1.6.6",
+        "pygsheets==2.0.2"
     ],
 )

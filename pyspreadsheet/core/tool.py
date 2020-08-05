@@ -19,3 +19,18 @@ def delete_none(rows):
             if rows[i][j] is None:
                 rows[i][j] = ""
     return rows
+
+
+def value_or_none(value):
+    if not value == "":
+        return value
+
+
+def remove_col(result, list_col_to_remove):
+    all_index = [result['columns_name'].index(col) for col in list_col_to_remove]
+    for row in result['rows']:
+        for i in all_index:
+            del row[i]
+    for i in all_index:
+        del result['columns_name'][i]
+    return result
