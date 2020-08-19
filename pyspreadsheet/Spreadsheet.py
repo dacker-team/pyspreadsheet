@@ -21,10 +21,12 @@ from pyspreadsheet.core.tool import value_or_none, remove_col
 
 
 class Spreadsheet:
-    def __init__(self, googleauthentication: GoogleAuthentication, dbstream: DBStream = None):
+    def __init__(self, googleauthentication: GoogleAuthentication, dbstream: DBStream = None,
+                 dbstream_spreadsheet_schema_name=None):
         self.googleauthentication = googleauthentication
         self.dbstream = dbstream
         self.account = googleauthentication.get_account("sheets").spreadsheets()
+        self.dbstream_spreadsheet_schema_name = "spreadsheet" if dbstream_spreadsheet_schema_name is None else dbstream_spreadsheet_schema_name
 
     def send(self, sheet_id, data):
         try:
@@ -137,6 +139,14 @@ class Spreadsheet:
                 result.append(column_name)
         return result
 
+    def get_last_spreadsheet_update_time(self, spreadsheet_id):
+        drive_api_service = self.googleauthentication.get_account("drive", "v3")
+        r = drive_api_service.files().get(
+            fileId=spreadsheet_id,
+            fields="lastModifyingUser,modifiedTime"
+        ).execute()
+        return r["modifiedTime"], r["lastModifyingUser"]["emailAddress"]
+
     def get_info_from_worksheets(self, config_path, fr_to_us_date=False, avoid_lines=None,
                                  transform_comma=False,
                                  format_date_from=None, list_col_to_remove=None, special_table_name=None,
@@ -144,8 +154,22 @@ class Spreadsheet:
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
         for key in config:
             worksheet_name = config[key]['worksheet_name']
-            wks = self._get_worksheets_by_id(config[key]['sheet_id'], worksheet_name)
-            table_name = "spreadsheet." + worksheet_name.replace(" ", "_").lower()
+            spreadsheet_id = config[key]['sheet_id']
+
+            last_spreadsheet_update_time, last_spreadsheet_update_by = self.get_last_spreadsheet_update_time(
+                spreadsheet_id)
+            print(last_spreadsheet_update_time, last_spreadsheet_update_by)
+            loaded_sheet_table = "_loaded_sheets"
+            max_in_datamart = self.dbstream.get_max(
+                schema=self.dbstream_spreadsheet_schema_name,
+                table=loaded_sheet_table, field="last_spreadsheet_update_time",
+                filter_clause="WHERE worksheet_name='%s' and last_spreadsheet_update_time='%s'"
+                              % (worksheet_name, last_spreadsheet_update_time))
+            print(max_in_datamart)
+            if max_in_datamart:
+                continue
+            wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
+            table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" ", "_").lower()
 
             rows = []
             c = 0
@@ -207,7 +231,7 @@ class Spreadsheet:
                     rows.append(list(map(lambda x: value_or_none(x), row)))
                 c = 1
             if special_table_name:
-                table_name = "spreadsheet." + special_table_name.replace(" ", "_")
+                table_name = self.dbstream_spreadsheet_schema_name + "." + special_table_name.replace(" ", "_")
             result = {
                 "table_name": table_name,
                 "columns_name": columns_names,
@@ -217,4 +241,13 @@ class Spreadsheet:
                 result = remove_col(result, list_col_to_remove)
 
             self.dbstream.send_data(result)
+            self.dbstream.send_data(
+                {
+                    "table_name": self.dbstream_spreadsheet_schema_name + "." + loaded_sheet_table,
+                    "columns_name": ["spreadsheet_id", "worksheet_name", "last_spreadsheet_update_time",
+                                     "last_spreadsheet_update_by"],
+                    "rows": [
+                        [spreadsheet_id, worksheet_name, last_spreadsheet_update_time, last_spreadsheet_update_by]],
+                }, replace=False
+            )
             print('table %s created' % table_name)
