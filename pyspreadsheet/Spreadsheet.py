@@ -149,6 +149,7 @@ class Spreadsheet:
 
     def get_info_from_worksheets(self, config_path, fr_to_us_date=False, avoid_lines=None,
                                  transform_comma=False,
+                                 table_name_from_key=False,
                                  format_date_from=None, list_col_to_remove=None, special_table_name=None,
                                  remove_comma=False, treat_int_column=False, remove_comma_float=False):
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
@@ -169,7 +170,10 @@ class Spreadsheet:
             if max_in_datamart:
                 continue
             wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
-            table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" ", "_").lower()
+            if table_name_from_key:
+                table_name = self.dbstream_spreadsheet_schema_name + "." + key
+            else:
+                table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" ", "_").lower()
 
             rows = []
             c = 0
