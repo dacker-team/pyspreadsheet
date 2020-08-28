@@ -145,7 +145,7 @@ class Spreadsheet:
             fileId=spreadsheet_id,
             fields="lastModifyingUser,modifiedTime"
         ).execute()
-        return r["modifiedTime"], r["lastModifyingUser"]["emailAddress"]
+        return r["modifiedTime"], r["lastModifyingUser"].get("emailAddress")
 
     def get_info_from_worksheets(self, config_path, fr_to_us_date=False, avoid_lines=None,
                                  transform_comma=False,
