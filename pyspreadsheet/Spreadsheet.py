@@ -151,11 +151,31 @@ class Spreadsheet:
                                  transform_comma=False,
                                  table_name_from_key=False,
                                  format_date_from=None, list_col_to_remove=None, special_table_name=None,
-                                 remove_comma=False, treat_int_column=False, remove_comma_float=False):
+                                 remove_comma=False, treat_int_column=False, remove_comma_float=False, replace=True):
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
+        argument_label = ['fr_to_us_date','avoid_lines','transform_comma','table_name_from_key','format_date_from','list_col_to_remove', 'special_table_name','remove_comma', 'treat_int_column', 'remove_comma_float','replace']
+        argument_list = [fr_to_us_date, avoid_lines, transform_comma, table_name_from_key, format_date_from, list_col_to_remove, special_table_name, remove_comma, treat_int_column, remove_comma_float,replace]
         for key in config:
             worksheet_name = config[key]['worksheet_name']
             spreadsheet_id = config[key]['sheet_id']
+
+            i=0
+            for argument in argument_label:
+                if argument in config[key]:
+                    argument_list[i] = config[key][argument]
+                i+=1
+
+            fr_to_us_date=argument_list[0]
+            avoid_lines=argument_list[1]
+            transform_comma=argument_list[2]
+            table_name_from_key=argument_list[3]
+            format_date_from=argument_list[4]
+            list_col_to_remove=argument_list[5]
+            special_table_name=argument_list[6]
+            remove_comma=argument_list[7]
+            treat_int_column=argument_list[8]
+            remove_comma_float=argument_list[9]
+            replace=argument_list[10]
 
             last_spreadsheet_update_time, last_spreadsheet_update_by = self.get_last_spreadsheet_update_time(
                 spreadsheet_id)
@@ -244,7 +264,9 @@ class Spreadsheet:
             if list_col_to_remove:
                 result = remove_col(result, list_col_to_remove)
 
-            self.dbstream.send_data(result)
+
+
+            self.dbstream.send_data(result,replace=replace)
             self.dbstream.send_data(
                 {
                     "table_name": self.dbstream_spreadsheet_schema_name + "." + loaded_sheet_table,
