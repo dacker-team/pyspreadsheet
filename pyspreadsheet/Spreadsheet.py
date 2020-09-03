@@ -30,7 +30,8 @@ GET_INFO_DEFAULT_ARGS = {
     "remove_comma": False,
     "treat_int_column": False,
     "remove_comma_float": False,
-    "replace": True
+    "replace": True,
+    "unformatting": False
 }
 
 
@@ -181,12 +182,11 @@ class Spreadsheet:
                 table=loaded_sheet_table, field="last_spreadsheet_update_time",
                 filter_clause="WHERE worksheet_name='%s' and last_spreadsheet_update_time='%s'"
                               % (worksheet_name, last_spreadsheet_update_time))
-            print(max_in_datamart)
+            max_in_datamart=None
             if max_in_datamart:
                 continue
             wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
-            table_name_from_key = key_config.get("table_name_from_key") if key_config.get(
-                "table_name_from_key") else False
+            table_name_from_key = _get_args(key_config, "table_name_from_key")
             if table_name_from_key:
                 table_name = self.dbstream_spreadsheet_schema_name + "." + key
             else:
@@ -201,6 +201,7 @@ class Spreadsheet:
                     wks_list.append(row)
                 wks = wks_list[avoid_lines:]
             columns_names = self.get_column_names(wks[0])
+
             transform_comma = _get_args(key_config, "transform_comma")
             remove_comma = _get_args(key_config, "remove_comma")
             remove_comma_float = _get_args(key_config, "remove_comma_float")
@@ -209,10 +210,23 @@ class Spreadsheet:
             format_date_from = _get_args(key_config, "format_date_from")
             list_col_to_remove = _get_args(key_config, "list_col_to_remove")
             treat_int_column = _get_args(key_config, "treat_int_column")
-            replace = _get_args(key_config, "replace")
-            # print(wks.get_values((1, 1), (3, 2), value_render="UNFORMATTED_VALUE"))
+            unformatting = _get_args(key_config, "unformatting")
+
+            if unformatting:
+                l=0
+                for row in wks:
+                    l += 1
+                wks = wks.get_values((1, 1), (l, len(columns_names)), value_render="UNFORMATTED_VALUE")
+                for row in wks:
+                    for i in range(len(columns_names)):
+                        row[i] = str(row[i])
+
+            columns_names.append('load_date')
+            load_date = str(datetime.now())
+
             for row in wks:
                 if c > 0:
+                    row.append(load_date)
                     for i in range(len(columns_names)):
                         if "€" in row[i]:
                             row[i] = row[i].replace(" ", "").replace("€", "")
@@ -259,7 +273,6 @@ class Spreadsheet:
                             if "date" in columns_names[i]:
                                 if row[i] and row[i] != "":
                                     row[i] = datetime.strptime(row[i], format_date_from)
-
                     row = tuple(row[:len(columns_names)])
                     rows.append(list(map(lambda x: value_or_none(x), row)))
                 c = 1
@@ -273,6 +286,7 @@ class Spreadsheet:
             if list_col_to_remove:
                 result = remove_col(result, list_col_to_remove)
 
+            replace = _get_args(key_config, "replace")
             self.dbstream.send_data(result, replace=replace)
             self.dbstream.send_data(
                 {
