@@ -19,6 +19,7 @@ setup(
         "dbstream>=0.0.12",
         "google-api-python-client>=1.6.6",
         "pygsheets==2.0.2",
-        "pyyaml>=5.3.1"
+        "pyyaml>=5.3.1",
+        "google-auth>="
     ],
 )

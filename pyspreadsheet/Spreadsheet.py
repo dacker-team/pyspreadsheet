@@ -195,6 +195,8 @@ class Spreadsheet:
                             row[i] = None
                         if row[i] == "#REF!":
                             row[i] = None
+                        if row[i].replace(" ", "") == "":
+                            row[i] = None
                         if treat_int_column and row[i] == "NA" or row[i] == '?':
                             row[i] = None
                         try:
