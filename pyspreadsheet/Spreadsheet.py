@@ -182,6 +182,7 @@ class Spreadsheet:
                 table=loaded_sheet_table, field="last_spreadsheet_update_time",
                 filter_clause="WHERE worksheet_name='%s' and last_spreadsheet_update_time='%s'"
                               % (worksheet_name, last_spreadsheet_update_time))
+            print(max_in_datamart)
             if max_in_datamart:
                 continue
             wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
