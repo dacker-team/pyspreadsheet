@@ -19,6 +19,24 @@ from pyspreadsheet.core.manage_sheet import add_worksheet
 from pyspreadsheet.core.read import check_availability_column
 from pyspreadsheet.core.tool import value_or_none, remove_col
 
+GET_INFO_DEFAULT_ARGS = {
+    "fr_to_us_date": False,
+    "avoid_lines": None,
+    "transform_comma": False,
+    "table_name_from_key": False,
+    "format_date_from": None,
+    "list_col_to_remove": None,
+    "special_table_name": None,
+    "remove_comma": False,
+    "treat_int_column": False,
+    "remove_comma_float": False,
+    "replace": True
+}
+
+
+def _get_args(key_config, param):
+    return key_config.get(param) if key_config.get(param) is not None else GET_INFO_DEFAULT_ARGS.get(param)
+
 
 class Spreadsheet:
     def __init__(self, googleauthentication: GoogleAuthentication, dbstream: DBStream = None,
@@ -147,36 +165,13 @@ class Spreadsheet:
         ).execute()
         return r["modifiedTime"], r["lastModifyingUser"].get("emailAddress")
 
-    def get_info_from_worksheets(self, config_path, fr_to_us_date=False, avoid_lines=None,
-                                 transform_comma=False,
-                                 table_name_from_key=False,
-                                 format_date_from=None, list_col_to_remove=None, special_table_name=None,
-                                 remove_comma=False, treat_int_column=False, remove_comma_float=False, replace=True):
+    def get_info_from_worksheets(self, config_path):
+
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
-        argument_label = ['fr_to_us_date','avoid_lines','transform_comma','table_name_from_key','format_date_from','list_col_to_remove', 'special_table_name','remove_comma', 'treat_int_column', 'remove_comma_float','replace']
-        argument_list = [fr_to_us_date, avoid_lines, transform_comma, table_name_from_key, format_date_from, list_col_to_remove, special_table_name, remove_comma, treat_int_column, remove_comma_float,replace]
         for key in config:
-            worksheet_name = config[key]['worksheet_name']
-            spreadsheet_id = config[key]['sheet_id']
-
-            i=0
-            for argument in argument_label:
-                if argument in config[key]:
-                    argument_list[i] = config[key][argument]
-                i+=1
-
-            fr_to_us_date=argument_list[0]
-            avoid_lines=argument_list[1]
-            transform_comma=argument_list[2]
-            table_name_from_key=argument_list[3]
-            format_date_from=argument_list[4]
-            list_col_to_remove=argument_list[5]
-            special_table_name=argument_list[6]
-            remove_comma=argument_list[7]
-            treat_int_column=argument_list[8]
-            remove_comma_float=argument_list[9]
-            replace=argument_list[10]
-
+            key_config = config[key]
+            worksheet_name = key_config['worksheet_name']
+            spreadsheet_id = key_config['sheet_id']
             last_spreadsheet_update_time, last_spreadsheet_update_by = self.get_last_spreadsheet_update_time(
                 spreadsheet_id)
             print(last_spreadsheet_update_time, last_spreadsheet_update_by)
@@ -190,6 +185,8 @@ class Spreadsheet:
             if max_in_datamart:
                 continue
             wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
+            table_name_from_key = key_config.get("table_name_from_key") if key_config.get(
+                "table_name_from_key") else False
             if table_name_from_key:
                 table_name = self.dbstream_spreadsheet_schema_name + "." + key
             else:
@@ -197,13 +194,23 @@ class Spreadsheet:
 
             rows = []
             c = 0
+            avoid_lines = _get_args(key_config, "avoid_lines")
             if avoid_lines:
                 wks_list = []
                 for row in wks:
                     wks_list.append(row)
                 wks = wks_list[avoid_lines:]
             columns_names = self.get_column_names(wks[0])
-
+            transform_comma = _get_args(key_config, "transform_comma")
+            remove_comma = _get_args(key_config, "remove_comma")
+            remove_comma_float = _get_args(key_config, "remove_comma_float")
+            fr_to_us_date = _get_args(key_config, "fr_to_us_date")
+            special_table_name = _get_args(key_config, "special_table_name")
+            format_date_from = _get_args(key_config, "format_date_from")
+            list_col_to_remove = _get_args(key_config, "list_col_to_remove")
+            treat_int_column = _get_args(key_config, "treat_int_column")
+            replace = _get_args(key_config, "replace")
+            # print(wks.get_values((1, 1), (3, 2), value_render="UNFORMATTED_VALUE"))
             for row in wks:
                 if c > 0:
                     for i in range(len(columns_names)):
@@ -266,9 +273,7 @@ class Spreadsheet:
             if list_col_to_remove:
                 result = remove_col(result, list_col_to_remove)
 
-
-
-            self.dbstream.send_data(result,replace=replace)
+            self.dbstream.send_data(result, replace=replace)
             self.dbstream.send_data(
                 {
                     "table_name": self.dbstream_spreadsheet_schema_name + "." + loaded_sheet_table,
