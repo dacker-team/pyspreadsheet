@@ -216,14 +216,13 @@ class Spreadsheet:
                 l=0
                 for row in wks:
                     l += 1
-                wks = wks.get_values((1, 1), (l, len(columns_names)), value_render="UNFORMATTED_VALUE")
+                wks = wks.get_values((1, 1), (l, len(columns_names)), value_render="UNFORMATTED_VALUE", date_time_render_option="FORMATTED_STRING")
                 for row in wks:
                     for i in range(len(columns_names)):
                         row[i] = str(row[i])
 
             columns_names.append('load_date')
             load_date = str(datetime.now())
-
             for row in wks:
                 if c > 0:
                     row.append(load_date)
@@ -232,18 +231,16 @@ class Spreadsheet:
                             row[i] = row[i].replace(" ", "").replace("€", "")
                         if "#DIV/0" in row[i]:
                             row[i] = None
-                        if row[i] == "#N/A":
+                        elif "#N/A" in row[i]:
                             row[i] = None
-                        if row[i] == "#REF!":
+                        elif "#REF!" in row[i]:
                             row[i] = None
-                        if row[i].replace(" ", "") == "":
+                        elif "#NAME?" in row[i]:
                             row[i] = None
-                        if treat_int_column and row[i] == "NA" or row[i] == '?':
+                        elif row[i].replace(" ", "") == "":
                             row[i] = None
-                        try:
-                            row[i] = int(row[i].replace("\u202f", ""))
-                        except Exception as e:
-                            pass
+                        elif treat_int_column and row[i] == "NA" or row[i] == '?':
+                            row[i] = None
                         if transform_comma:
                             try:
                                 row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
