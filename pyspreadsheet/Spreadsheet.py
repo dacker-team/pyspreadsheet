@@ -157,17 +157,17 @@ class Spreadsheet:
                     column_name = column_name + "_%s" % (str(result.count(column_name) + 1))
                 result.append(column_name)
             elif i == '':
-                column_name = "blank_header_col_"+str(len(result)+1)
+                column_name = "__blank_header_"
                 if column_name in result:
-                    column_name = column_name + "_%s" % (str(result.count(column_name) + 1))
+                    column_name = column_name + "%s" % (str(result.count(column_name) + 1))
                 result.append(column_name)
 
         drop = []
         for i in range(0, len(result)):
-            if "blank_header_col_" in result[i]:
+            if "__blank_header_" in result[i]:
                 t = 0
                 for y in range(i, len(result)):
-                    if not ("blank_header_col_" in result[y]):
+                    if not ("__blank_header_" in result[y]):
                         t = 1
                         break
                 if t == 0 and i != len(result)-1:
