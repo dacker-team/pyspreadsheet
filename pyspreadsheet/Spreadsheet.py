@@ -210,7 +210,7 @@ class Spreadsheet:
             if table_name_from_key:
                 table_name = self.dbstream_spreadsheet_schema_name + "." + key
             else:
-                table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" ", "_").lower()
+                table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" - ", "_").replace("-", "_").replace(" ", "_").lower()
 
             avoid_lines = _get_args(key_config=key_config, param="avoid_lines", dict_param=kwargs)
             if avoid_lines:
