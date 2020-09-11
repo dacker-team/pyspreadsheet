@@ -139,8 +139,8 @@ class Spreadsheet:
         print("This worksheet doesn't exist")
         return None
 
-    def get_column_names(self, row):
-        result = []
+    def get_columns_name(self, row):
+        columns_name = []
         for i in row:
             if i != '':
                 column_name = str \
@@ -152,31 +152,27 @@ class Spreadsheet:
                     .replace("/", "_") \
                     .replace("'s", "") \
                     .replace("-", "_")
-
-                if column_name in result:
-                    column_name = column_name + "_%s" % (str(result.count(column_name) + 1))
-                result.append(column_name)
+                if column_name in columns_name:
+                    column_name = column_name + "_%s" % (str(columns_name.count(column_name) + 1))
+                columns_name.append(column_name)
             elif i == '':
-                column_name = "__blank_header_"
-                if column_name in result:
-                    column_name = column_name + "%s" % (str(result.count(column_name) + 1))
-                result.append(column_name)
+                column_name = "__blank_header_"+str(len(columns_name)+1)
+                if column_name in columns_name:
+                    column_name = column_name + "%s" % (str(columns_name.count(column_name) + 1))
+                columns_name.append(column_name)
 
-        drop = []
-        for i in range(0, len(result)):
-            if "__blank_header_" in result[i]:
+        for i in range(0, len(columns_name)):
+            if "__blank_header_" in columns_name[i]:
                 t = 0
-                for y in range(i, len(result)):
-                    if not ("__blank_header_" in result[y]):
+                for y in range(i, len(columns_name)):
+                    if not ("__blank_header_" in columns_name[y]):
                         t = 1
                         break
-                if t == 0 and i != len(result)-1:
-                    drop.append(i)
-        x = 0
-        for i in drop:
-            del result[i-x]
-            x += 1
-        return result
+                if t == 0:
+                    columns_name = columns_name[:i]
+                    break
+
+        return columns_name
 
     def get_last_spreadsheet_update_time(self, spreadsheet_id):
         drive_api_service = self.googleauthentication.get_account("drive", "v3")
@@ -218,7 +214,7 @@ class Spreadsheet:
                 for row in wks:
                     wks_list.append(row)
                 wks = wks_list[avoid_lines:]
-            columns_names = self.get_column_names(wks[0])
+            columns_names = self.get_columns_name(wks[0])
 
             transform_comma = _get_args(key_config=key_config, param="transform_comma", dict_param=kwargs)
             remove_comma = _get_args(key_config=key_config, param="remove_comma", dict_param=kwargs)
