@@ -207,113 +207,116 @@ class Spreadsheet:
                 table_name = self.dbstream_spreadsheet_schema_name + "." + key
             else:
                 table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" - ", "_").replace("-", "_").replace(" ", "_").lower()
+            try:
+                avoid_lines = _get_args(key_config=key_config, param="avoid_lines", dict_param=kwargs)
+                if avoid_lines:
+                    wks_list = []
+                    for row in wks:
+                        wks_list.append(row)
+                    wks = wks_list[avoid_lines:]
+                columns_names = self.get_columns_name(wks[0])
 
-            avoid_lines = _get_args(key_config=key_config, param="avoid_lines", dict_param=kwargs)
-            if avoid_lines:
-                wks_list = []
-                for row in wks:
-                    wks_list.append(row)
-                wks = wks_list[avoid_lines:]
-            columns_names = self.get_columns_name(wks[0])
+                transform_comma = _get_args(key_config=key_config, param="transform_comma", dict_param=kwargs)
+                remove_comma = _get_args(key_config=key_config, param="remove_comma", dict_param=kwargs)
+                remove_comma_float = _get_args(key_config=key_config, param="remove_comma_float", dict_param=kwargs)
+                fr_to_us_date = _get_args(key_config=key_config, param="fr_to_us_date", dict_param=kwargs)
+                special_table_name = _get_args(key_config=key_config, param="special_table_name", dict_param=kwargs)
+                format_date_from = _get_args(key_config=key_config, param="format_date_from", dict_param=kwargs)
+                list_col_to_remove = _get_args(key_config=key_config, param="list_col_to_remove", dict_param=kwargs)
+                treat_int_column = _get_args(key_config=key_config, param="treat_int_column", dict_param=kwargs)
+                unformatting = _get_args(key_config=key_config, param="unformatting", dict_param=kwargs)
 
-            transform_comma = _get_args(key_config=key_config, param="transform_comma", dict_param=kwargs)
-            remove_comma = _get_args(key_config=key_config, param="remove_comma", dict_param=kwargs)
-            remove_comma_float = _get_args(key_config=key_config, param="remove_comma_float", dict_param=kwargs)
-            fr_to_us_date = _get_args(key_config=key_config, param="fr_to_us_date", dict_param=kwargs)
-            special_table_name = _get_args(key_config=key_config, param="special_table_name", dict_param=kwargs)
-            format_date_from = _get_args(key_config=key_config, param="format_date_from", dict_param=kwargs)
-            list_col_to_remove = _get_args(key_config=key_config, param="list_col_to_remove", dict_param=kwargs)
-            treat_int_column = _get_args(key_config=key_config, param="treat_int_column", dict_param=kwargs)
-            unformatting = _get_args(key_config=key_config, param="unformatting", dict_param=kwargs)
+                if unformatting:
+                    l=0
+                    for row in wks:
+                        l += 1
+                    wks = wks.get_values((1, 1), (l, len(columns_names)), value_render="UNFORMATTED_VALUE", date_time_render_option="FORMATTED_STRING")
+                    for row in wks:
+                        for i in range(len(columns_names)):
+                            row[i] = str(row[i])
 
-            if unformatting:
-                l=0
+                _etl___loaded_at__ = str(datetime.now())
+                rows = []
+                c = 0
                 for row in wks:
-                    l += 1
-                wks = wks.get_values((1, 1), (l, len(columns_names)), value_render="UNFORMATTED_VALUE", date_time_render_option="FORMATTED_STRING")
-                for row in wks:
+                    if c == 0:
+                        c = 1
+                        continue
                     for i in range(len(columns_names)):
-                        row[i] = str(row[i])
-
-            _etl___loaded_at__ = str(datetime.now())
-            rows = []
-            c = 0
-            for row in wks:
-                if c == 0:
-                    c = 1
-                    continue
-                for i in range(len(columns_names)):
-                    if "€" in row[i]:
-                        row[i] = row[i].replace(" ", "").replace("€", "")
-                    if "#DIV/0" in row[i]:
-                        row[i] = None
-                    elif "#N/A" in row[i]:
-                        row[i] = None
-                    elif "#REF!" in row[i]:
-                        row[i] = None
-                    elif "#NAME?" in row[i]:
-                        row[i] = None
-                    elif row[i].replace(" ", "") == "":
-                        row[i] = None
-                    elif treat_int_column and (row[i] == "NA" or row[i] == '?'):
-                        row[i] = None
-                    elif row[i] == "":
-                        row[i] = None
-                    if transform_comma:
-                        try:
-                            row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
-                        except Exception as e:
-                            pass
-                    if remove_comma:
-                        try:
-                            row[i] = int(row[i].replace(",", ""))
-                        except:
-                            pass
-                    if remove_comma_float:
-                        try:
-                            row[i] = float(row[i].replace(",", ""))
-                        except:
-                            pass
-                    if fr_to_us_date:
-                        if "date" in columns_names[i]:
-                            if row[i] and row[i] != "":
-                                try:
-                                    row[i] = row[i].replace(" ","")
-                                    row[i] = datetime.strptime(row[i], "%d/%m/%Y")
-                                except:
+                        if "€" in row[i]:
+                            row[i] = row[i].replace(" ", "").replace("€", "")
+                        if "#DIV/0" in row[i]:
+                            row[i] = None
+                        elif "#N/A" in row[i]:
+                            row[i] = None
+                        elif "#REF!" in row[i]:
+                            row[i] = None
+                        elif "#NAME?" in row[i]:
+                            row[i] = None
+                        elif row[i].replace(" ", "") == "":
+                            row[i] = None
+                        elif treat_int_column and (row[i] == "NA" or row[i] == '?'):
+                            row[i] = None
+                        elif row[i] == "":
+                            row[i] = None
+                        if transform_comma:
+                            try:
+                                row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
+                            except Exception as e:
+                                pass
+                        if remove_comma:
+                            try:
+                                row[i] = int(row[i].replace(",", ""))
+                            except:
+                                pass
+                        if remove_comma_float:
+                            try:
+                                row[i] = float(row[i].replace(",", ""))
+                            except:
+                                pass
+                        if fr_to_us_date:
+                            if "date" in columns_names[i]:
+                                if row[i] and row[i] != "":
                                     try:
-                                        row[i] = row[i].replace(" ", "")
-                                        row[i] = datetime.strptime(row[i], "%d/%m/%y")
+                                        row[i] = row[i].replace(" ","")
+                                        row[i] = datetime.strptime(row[i], "%d/%m/%Y")
                                     except:
-                                        row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
-                    if format_date_from:
-                        if "date" in columns_names[i]:
-                            if row[i] and row[i] != "":
-                                row[i] = datetime.strptime(row[i], format_date_from)
-                row = row[:len(columns_names)]
-                row.append(_etl___loaded_at__)
-                row = tuple(row)
-                rows.append(list(map(lambda x: value_or_none(x), row)))
-            if special_table_name:
-                table_name = self.dbstream_spreadsheet_schema_name + "." + special_table_name.replace(" ", "_")
-            columns_names.append("_etl___loaded_at__")
-            result = {
-                "table_name": table_name,
-                "columns_name": columns_names,
-                "rows": rows,
-            }
-            if list_col_to_remove:
-                result = remove_col(result, list_col_to_remove)
+                                        try:
+                                            row[i] = row[i].replace(" ", "")
+                                            row[i] = datetime.strptime(row[i], "%d/%m/%y")
+                                        except:
+                                            row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
+                        if format_date_from:
+                            if "date" in columns_names[i]:
+                                if row[i] and row[i] != "":
+                                    row[i] = datetime.strptime(row[i], format_date_from)
+                    row = row[:len(columns_names)]
+                    row.append(_etl___loaded_at__)
+                    row = tuple(row)
+                    rows.append(list(map(lambda x: value_or_none(x), row)))
+                if special_table_name:
+                    table_name = self.dbstream_spreadsheet_schema_name + "." + special_table_name.replace(" ", "_")
+                columns_names.append("_etl___loaded_at__")
+                result = {
+                    "table_name": table_name,
+                    "columns_name": columns_names,
+                    "rows": rows,
+                }
+                if list_col_to_remove:
+                    result = remove_col(result, list_col_to_remove)
 
-            replace = _get_args(key_config=key_config, param="replace", dict_param=kwargs)
-            self.dbstream.send_data(result, replace=replace)
-            self.dbstream.send_data(
-                {
-                    "table_name": self.dbstream_spreadsheet_schema_name + "." + loaded_sheet_table,
-                    "columns_name": ["spreadsheet_id", "worksheet_name", "last_spreadsheet_update_time",
-                                     "last_spreadsheet_update_by"],
-                    "rows": [
-                        [spreadsheet_id, worksheet_name, last_spreadsheet_update_time, last_spreadsheet_update_by]],
-                }, replace=False
-            )
-            print('table %s created' % table_name)
+                replace = _get_args(key_config=key_config, param="replace", dict_param=kwargs)
+                self.dbstream.send_data(result, replace=replace)
+                self.dbstream.send_data(
+                    {
+                        "table_name": self.dbstream_spreadsheet_schema_name + "." + loaded_sheet_table,
+                        "columns_name": ["spreadsheet_id", "worksheet_name", "last_spreadsheet_update_time",
+                                         "last_spreadsheet_update_by"],
+                        "rows": [
+                            [spreadsheet_id, worksheet_name, last_spreadsheet_update_time, last_spreadsheet_update_by]],
+                    }, replace=False
+                )
+                print('table %s created' % table_name)
+            except :
+                print("error to treat and/or send ", worksheet_name, " which ID is ", spreadsheet_id, " in RedShift schema ", table_name)
+                raise
