@@ -257,6 +257,8 @@ class Spreadsheet:
                         row[i] = None
                     elif treat_int_column and (row[i] == "NA" or row[i] == '?'):
                         row[i] = None
+                    elif row[i] == "":
+                        row[i] = None
                     if transform_comma:
                         try:
                             row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
@@ -276,9 +278,11 @@ class Spreadsheet:
                         if "date" in columns_names[i]:
                             if row[i] and row[i] != "":
                                 try:
+                                    row[i] = row[i].replace(" ","")
                                     row[i] = datetime.strptime(row[i], "%d/%m/%Y")
                                 except:
                                     try:
+                                        row[i] = row[i].replace(" ", "")
                                         row[i] = datetime.strptime(row[i], "%d/%m/%y")
                                     except:
                                         row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
