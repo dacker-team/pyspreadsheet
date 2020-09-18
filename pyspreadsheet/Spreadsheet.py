@@ -317,6 +317,5 @@ class Spreadsheet:
                     }, replace=False
                 )
                 print('table %s created' % table_name)
-            except :
-                print("error to treat and/or send ", worksheet_name, " which ID is ", spreadsheet_id, " in RedShift schema ", table_name)
-                raise
+            except Exception as e:
+                raise Exception("error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e)))
