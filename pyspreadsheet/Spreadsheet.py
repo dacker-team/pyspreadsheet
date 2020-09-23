@@ -31,7 +31,8 @@ GET_INFO_DEFAULT_ARGS = {
     "treat_int_column": False,
     "remove_comma_float": False,
     "replace": True,
-    "unformatting": False
+    "unformatting": False,
+    "return_ws_status": False
 }
 
 
@@ -145,6 +146,7 @@ class Spreadsheet:
             if i != '':
                 column_name = str \
                     .lower(str(i)) \
+                    .strip() \
                     .replace(" ", "_") \
                     .replace("(", "") \
                     .replace(")", "") \
@@ -185,6 +187,7 @@ class Spreadsheet:
     def get_info_from_worksheets(self, config_path, **kwargs):
 
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
+        dict_wks_status = dict()
         for key in config:
             key_config = config[key]
             worksheet_name = key_config['worksheet_name']
@@ -200,6 +203,7 @@ class Spreadsheet:
                               % (worksheet_name, last_spreadsheet_update_time))
             print(max_in_datamart)
             if max_in_datamart:
+                dict_wks_status[key] = "no_modifications_on_wks"
                 continue
             wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
             table_name_from_key = _get_args(key_config=key_config, param="table_name_from_key", dict_param=kwargs)
@@ -317,5 +321,9 @@ class Spreadsheet:
                     }, replace=False
                 )
                 print('table %s created' % table_name)
+                dict_wks_status[key] = "wks_updated"
+                return_ws_status = _get_args(key_config=key_config, param="return_ws_status", dict_param=kwargs)
+                if return_ws_status:
+                    return dict_wks_status
             except Exception as e:
                 raise Exception("error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e)))
