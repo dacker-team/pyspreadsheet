@@ -145,6 +145,7 @@ class Spreadsheet:
             if i != '':
                 column_name = str \
                     .lower(str(i)) \
+                    .strip() \
                     .replace(" ", "_") \
                     .replace("(", "") \
                     .replace(")", "") \
@@ -185,6 +186,7 @@ class Spreadsheet:
     def get_info_from_worksheets(self, config_path, **kwargs):
 
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
+        dict_error = dict()
         for key in config:
             key_config = config[key]
             worksheet_name = key_config['worksheet_name']
@@ -253,11 +255,9 @@ class Spreadsheet:
                             row[i] = None
                         elif "#NAME?" in row[i]:
                             row[i] = None
-                        elif row[i].replace(" ", "") == "":
-                            row[i] = None
                         elif treat_int_column and (row[i] == "NA" or row[i] == '?'):
                             row[i] = None
-                        elif row[i] == "":
+                        elif row[i].replace(" ", "") == "":
                             row[i] = None
                         if transform_comma:
                             try:
@@ -318,4 +318,7 @@ class Spreadsheet:
                 )
                 print('table %s created' % table_name)
             except Exception as e:
-                raise Exception("error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e)))
+                dict_error[key] = "error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e))
+                pass
+        if len(dict_error) != 0:
+            raise Exception(dict_error)
