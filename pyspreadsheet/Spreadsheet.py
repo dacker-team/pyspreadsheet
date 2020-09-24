@@ -31,8 +31,7 @@ GET_INFO_DEFAULT_ARGS = {
     "treat_int_column": False,
     "remove_comma_float": False,
     "replace": True,
-    "unformatting": False,
-    "return_ws_status": False
+    "unformatting": False
 }
 
 
@@ -188,6 +187,7 @@ class Spreadsheet:
 
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
         dict_wks_status = dict()
+        dict_error = dict()
         for key in config:
             key_config = config[key]
             worksheet_name = key_config['worksheet_name']
@@ -320,8 +320,9 @@ class Spreadsheet:
                 )
                 print('table %s created' % table_name)
                 dict_wks_status[key] = "wks_updated"
-                return_ws_status = _get_args(key_config=key_config, param="return_ws_status", dict_param=kwargs)
-                if return_ws_status:
-                    return dict_wks_status
             except Exception as e:
-                raise Exception("error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e)))
+                dict_error[key] = "error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e))
+                pass
+        if len(dict_error) != 0:
+            raise Exception(dict_error)
+        return dict_wks_status
