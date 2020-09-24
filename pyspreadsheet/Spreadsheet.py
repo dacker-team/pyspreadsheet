@@ -186,7 +186,6 @@ class Spreadsheet:
     def get_info_from_worksheets(self, config_path, **kwargs):
 
         config = yaml.load(open(config_path), Loader=yaml.FullLoader)
-        dict_wks_status = dict()
         dict_error = dict()
         for key in config:
             key_config = config[key]
@@ -203,7 +202,6 @@ class Spreadsheet:
                               % (worksheet_name, last_spreadsheet_update_time))
             print(max_in_datamart)
             if max_in_datamart:
-                dict_wks_status[key] = "no_modifications_on_wks"
                 continue
             wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
             table_name_from_key = _get_args(key_config=key_config, param="table_name_from_key", dict_param=kwargs)
@@ -319,10 +317,8 @@ class Spreadsheet:
                     }, replace=False
                 )
                 print('table %s created' % table_name)
-                dict_wks_status[key] = "wks_updated"
             except Exception as e:
                 dict_error[key] = "error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e))
                 pass
         if len(dict_error) != 0:
             raise Exception(dict_error)
-        return dict_wks_status
