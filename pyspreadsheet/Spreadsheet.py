@@ -257,7 +257,7 @@ class Spreadsheet:
                             row[i] = None
                         elif treat_int_column and (row[i] == "NA" or row[i] == '?'):
                             row[i] = None
-                        elif row[i] == "" or row[i].replace(" ", "") == "":
+                        elif row[i].replace(" ", "") == "":
                             row[i] = None
                         if transform_comma:
                             try:
