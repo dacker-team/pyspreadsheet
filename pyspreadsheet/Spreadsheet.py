@@ -158,7 +158,7 @@ class Spreadsheet:
                     column_name = column_name + "_%s" % (str(columns_name.count(column_name) + 1))
                 columns_name.append(column_name)
             elif i == '':
-                column_name = "__blank_header_"+str(len(columns_name)+1)
+                column_name = "__blank_header_" + str(len(columns_name) + 1)
                 if column_name in columns_name:
                     column_name = column_name + "%s" % (str(columns_name.count(column_name) + 1))
                 columns_name.append(column_name)
@@ -209,7 +209,8 @@ class Spreadsheet:
             if table_name_from_key:
                 table_name = self.dbstream_spreadsheet_schema_name + "." + key
             else:
-                table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" - ", "_").replace("-", "_").replace(" ", "_").lower()
+                table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" - ", "_").replace(
+                    "-", "_").replace(" ", "_").lower()
             try:
                 avoid_lines = _get_args(key_config=key_config, param="avoid_lines", dict_param=kwargs)
                 if avoid_lines:
@@ -230,10 +231,11 @@ class Spreadsheet:
                 unformatting = _get_args(key_config=key_config, param="unformatting", dict_param=kwargs)
 
                 if unformatting:
-                    l=0
+                    l = 0
                     for row in wks:
                         l += 1
-                    wks = wks.get_values((1, 1), (l, len(columns_names)), value_render="UNFORMATTED_VALUE", date_time_render_option="FORMATTED_STRING")
+                    wks = wks.get_values((1, 1), (l, len(columns_names)), value_render="UNFORMATTED_VALUE",
+                                         date_time_render_option="FORMATTED_STRING")
                     for row in wks:
                         for i in range(len(columns_names)):
                             row[i] = str(row[i])
@@ -279,7 +281,7 @@ class Spreadsheet:
                             if "date" in columns_names[i]:
                                 if row[i] and row[i] != "":
                                     try:
-                                        row[i] = row[i].replace(" ","")
+                                        row[i] = row[i].replace(" ", "")
                                         row[i] = datetime.strptime(row[i], "%d/%m/%Y")
                                     except:
                                         try:
@@ -319,7 +321,8 @@ class Spreadsheet:
                 )
                 print('table %s created' % table_name)
             except Exception as e:
-                dict_error[key] = "error to treat and/or send %s which ID is %s in schema %s : %s" % (str(worksheet_name), str(spreadsheet_id), str(table_name), str(e))
+                dict_error[key] = "error to treat and/or send %s which ID is %s in schema %s : %s" % (
+                str(worksheet_name), str(spreadsheet_id), str(table_name), str(e))
                 pass
         if len(dict_error) != 0:
             raise Exception(dict_error)
