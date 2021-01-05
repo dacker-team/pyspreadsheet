@@ -152,7 +152,8 @@ class Spreadsheet:
                     .replace("\n", "_") \
                     .replace("/", "_") \
                     .replace("'s", "") \
-                    .replace("-", "_")
+                    .replace("-", "_") \
+                    .replace(".", "_")
                 if column_name in columns_name:
                     column_name = column_name + "_%s" % (str(columns_name.count(column_name) + 1))
                 columns_name.append(column_name)
