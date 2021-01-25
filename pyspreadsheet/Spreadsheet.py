@@ -31,7 +31,8 @@ GET_INFO_DEFAULT_ARGS = {
     "treat_int_column": False,
     "remove_comma_float": False,
     "replace": True,
-    "unformatting": False
+    "unformatting": False,
+    "do_not_send": False
 }
 
 
@@ -312,6 +313,9 @@ class Spreadsheet:
                 result = remove_col(result, list_col_to_remove)
 
             replace = _get_args(key_config=key_config, param="replace", dict_param=kwargs)
+            do_not_send = _get_args(key_config=key_config, param="do_not_send", dict_param=kwargs)
+            if do_not_send:
+                return result
             self.dbstream.send_data(result, replace=replace)
             self.dbstream.send_data(
                 {
