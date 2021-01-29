@@ -136,7 +136,11 @@ class Spreadsheet:
     # NEW
 
     def _get_worksheets_by_id(self, sheet_id, worksheet_name):
-        ps = pygsheets.client.Client(credentials=self.googleauthentication.credentials())
+        if self.googleauthentication.user_credentials_email:
+            credentials = self.googleauthentication.user_credentials()
+        else:
+            credentials = self.googleauthentication.credentials()
+        ps = pygsheets.client.Client(credentials=credentials)
         sh = ps.open_by_key(sheet_id)
         wks_list = sh.worksheets()
         for wks in wks_list:
@@ -244,7 +248,7 @@ class Spreadsheet:
                     for i in range(len(columns_names)):
                         row[i] = str(row[i])
 
-            _etl___loaded_at__ = str(datetime.now())
+            _etl___loaded_at__ = str(datetime.now())[:19]
             rows = []
             c = 0
             for row in wks:
@@ -266,6 +270,11 @@ class Spreadsheet:
                         row[i] = None
                     elif row[i].replace(" ", "") == "":
                         row[i] = None
+                    try:
+                        int(row[i].replace(" ", ""))
+                        row[i] = row[i].replace(" ", "")
+                    except:
+                        pass
                     if transform_comma:
                         try:
                             row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
