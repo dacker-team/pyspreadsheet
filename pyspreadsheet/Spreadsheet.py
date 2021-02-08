@@ -47,13 +47,15 @@ class Spreadsheet:
                  googleauthentication: GoogleAuthentication,
                  dbstream: DBStream = None,
                  dbstream_spreadsheet_schema_name=None,
-                 data_collection_config_path=None):
+                 data_collection_config_path=None,
+                 include_collection_in_table_name=False):
         self.googleauthentication = googleauthentication
         self.dbstream = dbstream
         self.account = googleauthentication.get_account("sheets").spreadsheets()
         self.dbstream_spreadsheet_schema_name = "spreadsheet" if dbstream_spreadsheet_schema_name is None \
             else dbstream_spreadsheet_schema_name
         self.data_collection_config_path = data_collection_config_path
+        self.include_collection_in_table_name = include_collection_in_table_name
 
     def send(self, sheet_id, data):
         try:
@@ -191,7 +193,8 @@ class Spreadsheet:
         drive_api_service = self.googleauthentication.get_account("drive", "v3")
         r = drive_api_service.files().get(
             fileId=spreadsheet_id,
-            fields="lastModifyingUser,modifiedTime"
+            fields="lastModifyingUser,modifiedTime",
+            supportsAllDrives=True
         ).execute()
         return r["modifiedTime"], r["lastModifyingUser"].get("emailAddress")
 
@@ -215,10 +218,15 @@ class Spreadsheet:
         wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
         table_name_from_key = _get_args(key_config=key_config, param="table_name_from_key", dict_param=kwargs)
         if table_name_from_key:
-            table_name = self.dbstream_spreadsheet_schema_name + "." + key
+            table_name = key
         else:
-            table_name = self.dbstream_spreadsheet_schema_name + "." + worksheet_name.replace(" - ", "_").replace(
-                "-", "_").replace(" ", "_").lower()
+            table_name = worksheet_name.replace(" - ", "_").replace("-", "_").replace(" ", "_").lower()
+
+        if self.include_collection_in_table_name:
+            table_name = self.data_collection_config_path.split("/")[-1].replace(".yaml", "") + "___" + table_name
+
+        table_name = self.dbstream_spreadsheet_schema_name + "." + table_name
+
         try:
             avoid_lines = _get_args(key_config=key_config, param="avoid_lines", dict_param=kwargs)
             if avoid_lines:
