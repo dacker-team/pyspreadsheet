@@ -207,14 +207,16 @@ class Spreadsheet:
             spreadsheet_id)
         print(last_spreadsheet_update_time, last_spreadsheet_update_by)
         loaded_sheet_table = "_loaded_sheets"
-        max_in_datamart = self.dbstream.get_max(
-            schema=self.dbstream_spreadsheet_schema_name,
-            table=loaded_sheet_table, field="last_spreadsheet_update_time",
-            filter_clause="WHERE worksheet_name='%s' and last_spreadsheet_update_time='%s'"
-                          % (worksheet_name, last_spreadsheet_update_time))
-        print(max_in_datamart)
-        if max_in_datamart:
-            return 0
+        force_refresh = key_config.get('force_refresh')
+        if not force_refresh:
+            max_in_datamart = self.dbstream.get_max(
+                schema=self.dbstream_spreadsheet_schema_name,
+                table=loaded_sheet_table, field="last_spreadsheet_update_time",
+                filter_clause="WHERE worksheet_name='%s' and last_spreadsheet_update_time='%s'"
+                              % (worksheet_name, last_spreadsheet_update_time))
+            print(max_in_datamart)
+            if max_in_datamart:
+                return 0
         wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
         table_name_from_key = _get_args(key_config=key_config, param="table_name_from_key", dict_param=kwargs)
         if table_name_from_key:
