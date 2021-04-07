@@ -245,6 +245,7 @@ class Spreadsheet:
             special_table_name = _get_args(key_config=key_config, param="special_table_name", dict_param=kwargs)
             format_date_from = _get_args(key_config=key_config, param="format_date_from", dict_param=kwargs)
             list_col_to_remove = _get_args(key_config=key_config, param="list_col_to_remove", dict_param=kwargs)
+            not_date_fields = _get_args(key_config=key_config, param="not_date_fields", dict_param=kwargs)
             treat_int_column = _get_args(key_config=key_config, param="treat_int_column", dict_param=kwargs)
             unformatting = _get_args(key_config=key_config, param="unformatting", dict_param=kwargs)
 
@@ -301,7 +302,7 @@ class Spreadsheet:
                         except:
                             pass
                     if fr_to_us_date:
-                        if "date" in columns_names[i]:
+                        if "date" in columns_names[i] and columns_names[i] not in not_date_fields:
                             if row[i] and row[i] != "":
                                 try:
                                     row[i] = row[i].replace(" ", "")
