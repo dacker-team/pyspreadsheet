@@ -302,17 +302,18 @@ class Spreadsheet:
                         except:
                             pass
                     if fr_to_us_date:
-                        if "date" in columns_names[i] and columns_names[i] not in not_date_fields:
-                            if row[i] and row[i] != "":
-                                try:
-                                    row[i] = row[i].replace(" ", "")
-                                    row[i] = datetime.strptime(row[i], "%d/%m/%Y")
-                                except:
+                        if "date" in columns_names[i]:
+                            if not not_date_fields or (columns_names[i] not in not_date_fields):
+                                if row[i] and row[i] != "":
                                     try:
                                         row[i] = row[i].replace(" ", "")
-                                        row[i] = datetime.strptime(row[i], "%d/%m/%y")
+                                        row[i] = datetime.strptime(row[i], "%d/%m/%Y")
                                     except:
-                                        row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
+                                        try:
+                                            row[i] = row[i].replace(" ", "")
+                                            row[i] = datetime.strptime(row[i], "%d/%m/%y")
+                                        except:
+                                            row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
                     if format_date_from:
                         if "date" in columns_names[i]:
                             if row[i] and row[i] != "":
