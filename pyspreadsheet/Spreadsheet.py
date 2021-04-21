@@ -10,6 +10,7 @@ import pygsheets
 import requests
 import googleapiclient
 import yaml
+import jinja2
 from googleauthentication import GoogleAuthentication
 from dbstream import DBStream
 
@@ -48,6 +49,7 @@ class Spreadsheet:
                  dbstream: DBStream = None,
                  dbstream_spreadsheet_schema_name=None,
                  data_collection_config_path=None,
+                 data_collection_config_params_path=None,
                  include_collection_in_table_name=False):
         self.googleauthentication = googleauthentication
         self.dbstream = dbstream
@@ -55,6 +57,7 @@ class Spreadsheet:
         self.dbstream_spreadsheet_schema_name = "spreadsheet" if dbstream_spreadsheet_schema_name is None \
             else dbstream_spreadsheet_schema_name
         self.data_collection_config_path = data_collection_config_path
+        self.data_collection_config_params_path = data_collection_config_params_path
         self.include_collection_in_table_name = include_collection_in_table_name
 
     def send(self, sheet_id, data):
@@ -199,7 +202,15 @@ class Spreadsheet:
         return r["modifiedTime"], r["lastModifyingUser"].get("emailAddress")
 
     def get_info_from_worksheet(self, key, **kwargs):
-        config = yaml.load(open(self.data_collection_config_path), Loader=yaml.FullLoader)
+        jinja_env = jinja2.Environment()
+        params = {}
+        if self.data_collection_config_params_path:
+            params = yaml.load(
+                jinja_env.from_string(open(self.data_collection_config_params_path).read()).render(),
+                Loader=yaml.FullLoader)
+        config = yaml.load(
+            jinja_env.from_string(open(self.data_collection_config_path).read()).render(params),
+            Loader=yaml.FullLoader)
         key_config = config[key]
         worksheet_name = key_config['worksheet_name']
         spreadsheet_id = key_config['sheet_id']
@@ -356,7 +367,15 @@ class Spreadsheet:
             )
 
     def get_info_from_worksheets(self, **kwargs):
-        config = yaml.load(open(self.data_collection_config_path), Loader=yaml.FullLoader)
+        jinja_env = jinja2.Environment()
+        params = {}
+        if self.data_collection_config_params_path:
+            params = yaml.load(
+                jinja_env.from_string(open(self.data_collection_config_params_path).read()).render(),
+                Loader=yaml.FullLoader)
+        config = yaml.load(
+            jinja_env.from_string(open(self.data_collection_config_path).read()).render(params),
+            Loader=yaml.FullLoader)
         dict_error = dict()
         for key in config:
             try:
