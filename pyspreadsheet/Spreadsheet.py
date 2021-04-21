@@ -50,6 +50,7 @@ class Spreadsheet:
                  dbstream_spreadsheet_schema_name=None,
                  data_collection_config_path=None,
                  data_collection_config_params_path=None,
+                 data_collection_config_params=None,
                  include_collection_in_table_name=False):
         self.googleauthentication = googleauthentication
         self.dbstream = dbstream
@@ -58,6 +59,7 @@ class Spreadsheet:
             else dbstream_spreadsheet_schema_name
         self.data_collection_config_path = data_collection_config_path
         self.data_collection_config_params_path = data_collection_config_params_path
+        self.data_collection_config_params = data_collection_config_params
         self.include_collection_in_table_name = include_collection_in_table_name
 
     def send(self, sheet_id, data):
@@ -208,6 +210,8 @@ class Spreadsheet:
             params = yaml.load(
                 jinja_env.from_string(open(self.data_collection_config_params_path).read()).render(),
                 Loader=yaml.FullLoader)
+        if self.data_collection_config_params:
+            params.update(self.data_collection_config_params)
         config = yaml.load(
             jinja_env.from_string(open(self.data_collection_config_path).read()).render(params),
             Loader=yaml.FullLoader)
@@ -373,6 +377,8 @@ class Spreadsheet:
             params = yaml.load(
                 jinja_env.from_string(open(self.data_collection_config_params_path).read()).render(),
                 Loader=yaml.FullLoader)
+        if self.data_collection_config_params:
+            params.update(self.data_collection_config_params)
         config = yaml.load(
             jinja_env.from_string(open(self.data_collection_config_path).read()).render(params),
             Loader=yaml.FullLoader)
