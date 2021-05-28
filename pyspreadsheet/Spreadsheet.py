@@ -10,6 +10,7 @@ import pygsheets
 import requests
 import googleapiclient
 import yaml
+import jinja2
 from googleauthentication import GoogleAuthentication
 from dbstream import DBStream
 
@@ -48,6 +49,8 @@ class Spreadsheet:
                  dbstream: DBStream = None,
                  dbstream_spreadsheet_schema_name=None,
                  data_collection_config_path=None,
+                 data_collection_config_params_path=None,
+                 data_collection_config_params=None,
                  include_collection_in_table_name=False):
         self.googleauthentication = googleauthentication
         self.dbstream = dbstream
@@ -55,6 +58,8 @@ class Spreadsheet:
         self.dbstream_spreadsheet_schema_name = "spreadsheet" if dbstream_spreadsheet_schema_name is None \
             else dbstream_spreadsheet_schema_name
         self.data_collection_config_path = data_collection_config_path
+        self.data_collection_config_params_path = data_collection_config_params_path
+        self.data_collection_config_params = data_collection_config_params
         self.include_collection_in_table_name = include_collection_in_table_name
 
     def send(self, sheet_id, data):
@@ -201,7 +206,17 @@ class Spreadsheet:
         return r["modifiedTime"], None
 
     def get_info_from_worksheet(self, key, **kwargs):
-        config = yaml.load(open(self.data_collection_config_path), Loader=yaml.FullLoader)
+        jinja_env = jinja2.Environment()
+        params = {}
+        if self.data_collection_config_params_path:
+            params = yaml.load(
+                jinja_env.from_string(open(self.data_collection_config_params_path).read()).render(),
+                Loader=yaml.FullLoader)
+        if self.data_collection_config_params:
+            params.update(self.data_collection_config_params)
+        config = yaml.load(
+            jinja_env.from_string(open(self.data_collection_config_path).read()).render(params),
+            Loader=yaml.FullLoader)
         key_config = config[key]
         worksheet_name = key_config['worksheet_name']
         spreadsheet_id = key_config['sheet_id']
@@ -209,14 +224,16 @@ class Spreadsheet:
             spreadsheet_id)
         print(last_spreadsheet_update_time, last_spreadsheet_update_by)
         loaded_sheet_table = "_loaded_sheets"
-        max_in_datamart = self.dbstream.get_max(
-            schema=self.dbstream_spreadsheet_schema_name,
-            table=loaded_sheet_table, field="last_spreadsheet_update_time",
-            filter_clause="WHERE worksheet_name='%s' and last_spreadsheet_update_time='%s'"
-                          % (worksheet_name, last_spreadsheet_update_time))
-        print(max_in_datamart)
-        if max_in_datamart:
-            return 0
+        force_refresh = key_config.get('force_refresh')
+        if not force_refresh:
+            max_in_datamart = self.dbstream.get_max(
+                schema=self.dbstream_spreadsheet_schema_name,
+                table=loaded_sheet_table, field="last_spreadsheet_update_time",
+                filter_clause="WHERE worksheet_name='%s' and last_spreadsheet_update_time='%s'"
+                              % (worksheet_name, last_spreadsheet_update_time))
+            print(max_in_datamart)
+            if max_in_datamart:
+                return 0
         wks = self._get_worksheets_by_id(spreadsheet_id, worksheet_name)
         table_name_from_key = _get_args(key_config=key_config, param="table_name_from_key", dict_param=kwargs)
         if table_name_from_key:
@@ -245,6 +262,7 @@ class Spreadsheet:
             special_table_name = _get_args(key_config=key_config, param="special_table_name", dict_param=kwargs)
             format_date_from = _get_args(key_config=key_config, param="format_date_from", dict_param=kwargs)
             list_col_to_remove = _get_args(key_config=key_config, param="list_col_to_remove", dict_param=kwargs)
+            not_date_fields = _get_args(key_config=key_config, param="not_date_fields", dict_param=kwargs)
             treat_int_column = _get_args(key_config=key_config, param="treat_int_column", dict_param=kwargs)
             unformatting = _get_args(key_config=key_config, param="unformatting", dict_param=kwargs)
 
@@ -302,16 +320,17 @@ class Spreadsheet:
                             pass
                     if fr_to_us_date:
                         if "date" in columns_names[i]:
-                            if row[i] and row[i] != "":
-                                try:
-                                    row[i] = row[i].replace(" ", "")
-                                    row[i] = datetime.strptime(row[i], "%d/%m/%Y")
-                                except:
+                            if not not_date_fields or (columns_names[i] not in not_date_fields):
+                                if row[i] and row[i] != "":
                                     try:
                                         row[i] = row[i].replace(" ", "")
-                                        row[i] = datetime.strptime(row[i], "%d/%m/%y")
+                                        row[i] = datetime.strptime(row[i], "%d/%m/%Y")
                                     except:
-                                        row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
+                                        try:
+                                            row[i] = row[i].replace(" ", "")
+                                            row[i] = datetime.strptime(row[i], "%d/%m/%y")
+                                        except:
+                                            row[i] = datetime.strptime(row[i][:10], "%Y-%m-%d")
                     if format_date_from:
                         if "date" in columns_names[i]:
                             if row[i] and row[i] != "":
@@ -354,7 +373,17 @@ class Spreadsheet:
             )
 
     def get_info_from_worksheets(self, **kwargs):
-        config = yaml.load(open(self.data_collection_config_path), Loader=yaml.FullLoader)
+        jinja_env = jinja2.Environment()
+        params = {}
+        if self.data_collection_config_params_path:
+            params = yaml.load(
+                jinja_env.from_string(open(self.data_collection_config_params_path).read()).render(),
+                Loader=yaml.FullLoader)
+        if self.data_collection_config_params:
+            params.update(self.data_collection_config_params)
+        config = yaml.load(
+            jinja_env.from_string(open(self.data_collection_config_path).read()).render(params),
+            Loader=yaml.FullLoader)
         dict_error = dict()
         for key in config:
             try:
