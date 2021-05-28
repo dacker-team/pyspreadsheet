@@ -7,3 +7,4 @@ pyspreadsheet.egg-info/
 *sandbox*
 *client*
 deploy.sh
+*.csv

@@ -196,7 +196,9 @@ class Spreadsheet:
             fields="lastModifyingUser,modifiedTime",
             supportsAllDrives=True
         ).execute()
-        return r["modifiedTime"], r["lastModifyingUser"].get("emailAddress")
+        if r.get("lastModifyingUser"):
+            return r["modifiedTime"], r["lastModifyingUser"].get("emailAddress")
+        return r["modifiedTime"], None
 
     def get_info_from_worksheet(self, key, **kwargs):
         config = yaml.load(open(self.data_collection_config_path), Loader=yaml.FullLoader)

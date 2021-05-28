@@ -5,7 +5,7 @@ with open('README.rst') as f:
 
 setup(
     name='pyspreadsheet',
-    version='0.2.5',
+    version='0.2.6',
     description='Easily send data to Google Sheets',
     long_description=readme,
     author='Dacker',
@@ -16,7 +16,7 @@ setup(
     python_requires='>=3',
     install_requires=[
         "googleauthentication>=0.0.10",
-        "dbstream>=0.0.12",
+        "dbstream>=0.1.2",
         "google-api-python-client>=1.6.6",
         "pygsheets==2.0.2",
         "pyyaml>=5.3.1",
