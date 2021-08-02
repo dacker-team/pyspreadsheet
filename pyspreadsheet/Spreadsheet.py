@@ -308,7 +308,7 @@ class Spreadsheet:
                     if transform_comma:
                         try:
                             row[i] = float(row[i].replace(",", ".").replace("\u202f", ""))
-                        except Exception as e:
+                        except:
                             pass
                     if remove_comma:
                         try:
@@ -316,10 +316,11 @@ class Spreadsheet:
                         except:
                             pass
                     if remove_comma_float:
-                        try:
-                            row[i] = float(row[i].replace(",", ""))
-                        except:
-                            pass
+                        if '.' in str(row[i]):
+                            try:
+                                row[i] = float(row[i].replace(",", ""))
+                            except:
+                                pass
                     if fr_to_us_date:
                         if "date" in columns_names[i]:
                             if not not_date_fields or (columns_names[i] not in not_date_fields):
@@ -338,11 +339,11 @@ class Spreadsheet:
                             if row[i] and row[i] != "":
                                 row[i] = datetime.strptime(row[i], format_date_from)
                     if percent_to_float:
-                        try:
-                            if "%" in row[i]:
-                                row[i] = float(row[i].replace("%", "")) / 100
-                        except:
-                            pass
+                        if "%" in str(row[i]):
+                            try:
+                                row[i] = float(str(row[i]).replace("%", "")) / 100
+                            except:
+                                pass
                 row = row[:len(columns_names)]
                 row.append(_etl___loaded_at__)
                 row = tuple(row)
