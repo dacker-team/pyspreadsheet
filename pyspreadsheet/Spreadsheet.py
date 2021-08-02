@@ -316,7 +316,7 @@ class Spreadsheet:
                         except:
                             pass
                     if remove_comma_float:
-                        if '.' in str(row[i]):
+                        if ',' in str(row[i]):
                             try:
                                 row[i] = float(row[i].replace(",", ""))
                             except:
