@@ -33,7 +33,8 @@ GET_INFO_DEFAULT_ARGS = {
     "remove_comma_float": False,
     "replace": True,
     "unformatting": False,
-    "do_not_send": False
+    "do_not_send": False,
+    "percent_to_float": False
 }
 
 
@@ -265,6 +266,7 @@ class Spreadsheet:
             not_date_fields = _get_args(key_config=key_config, param="not_date_fields", dict_param=kwargs)
             treat_int_column = _get_args(key_config=key_config, param="treat_int_column", dict_param=kwargs)
             unformatting = _get_args(key_config=key_config, param="unformatting", dict_param=kwargs)
+            percent_to_float = _get_args(key_config=key_config, param="percent_to_float", dict_param=kwargs)
 
             if unformatting:
                 _l = 0
@@ -335,6 +337,12 @@ class Spreadsheet:
                         if "date" in columns_names[i]:
                             if row[i] and row[i] != "":
                                 row[i] = datetime.strptime(row[i], format_date_from)
+                    if percent_to_float:
+                        try:
+                            if "%" in row[i]:
+                                row[i] = float(row[i].replace("%", "")) / 100
+                        except:
+                            pass
                 row = row[:len(columns_names)]
                 row.append(_etl___loaded_at__)
                 row = tuple(row)
