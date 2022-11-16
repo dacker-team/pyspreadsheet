@@ -253,7 +253,7 @@ class Spreadsheet:
                 for row in wks:
                     wks_list.append(row)
                 wks = wks_list[avoid_lines:]
-            columns_names = self.get_columns_name(wks[0])
+            columns_names = self.get_columns_name(wks[1])
 
             transform_comma = _get_args(key_config=key_config, param="transform_comma", dict_param=kwargs)
             remove_comma = _get_args(key_config=key_config, param="remove_comma", dict_param=kwargs)
